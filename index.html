@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Craft Universe</title>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #6b8cbc;
+            --accent: #ff6b6b;
+            --background: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --border: #e1e5eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .elements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .element {
+            padding: 15px 10px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: grab;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            user-select: none;
+        }
+
+        .element:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .crafting-area {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .drop-zone {
+            height: 150px;
+            border: 3px dashed var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .drop-zone.active {
+            border-color: var(--accent);
+            background-color: rgba(255, 107, 107, 0.1);
+        }
+
+        .drop-zone p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        .combine-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .combine-btn:hover {
+            background-color: var(--secondary);
+        }
+
+        .combine-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .result-area {
+            min-height: 100px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.03);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .discovered-elements {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        .discovered-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .discovered-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .elements-grid {
+                max-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Infinite Craft Universe</h1>
+            <p class="subtitle">Combine elements to discover new ones!</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="total-elements">1000</div>
+                <div>Total Elements</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="discovered-count">4</div>
+                <div>Discovered</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="combinations">0</div>
+                <div>Combinations</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="elements-section">
+                <input type="text" class="search-box" placeholder="Search elements..." id="search-input">
+                <div class="elements-grid" id="elements-grid">
+                    <!-- Elements will be generated here -->
+                </div>
+            </div>
+            
+            <div class="crafting-area">
+                <div class="drop-zone" id="drop-zone">
+                    <p>Drag two elements here to combine</p>
+                </div>
+                
+                <button class="combine-btn" id="combine-btn" disabled>Combine Elements</button>
+                
+                <div class="result-area" id="result-area">
+                    <p>Your new creation will appear here</p>
+                </div>
+                
+                <div class="discovered-elements">
+                    <div class="discovered-title">Recently Discovered</div>
+                    <div id="discovered-list">
+                        <!-- Discovered elements will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate 1000 starter elements with different colors
+        const generateElements = () => {
+            const elements = [
+                // Basic elements
+                { name: "Water", color: "#3498db" },
+                { name: "Fire", color: "#e74c3c" },
+                { name: "Earth", color: "#8e44ad" },
+                { name: "Air", color: "#1abc9c" },
+                
+                // Add the specific combinations you mentioned
+                { name: "Dog", color: "#d35400" },
+                { name: "Life", color: "#27ae60" },
+                { name: "Parrot", color: "#2ecc71" },
+                { name: "Studio", color: "#9b59b6" },
+                { name: "Dem Studios", color: "#8e44ad" },
+                { name: "14592 Studios", color: "#2980b9" }
+            ];
+            
+            // Generate more elements with different colors
+            const colorPalette = [
+                "#e74c3c", "#c0392b", "#9b59b6", "#8e44ad", "#3498db", 
+                "#2980b9", "#1abc9c", "#16a085", "#2ecc71", "#27ae60",
+                "#f1c40f", "#f39c12", "#e67e22", "#d35400", "#ecf0f1",
+                "#bdc3c7", "#95a5a6", "#7f8c8d", "#34495e", "#2c3e50"
+            ];
+            
+            const prefixes = ["Ancient", "Mystic", "Cosmic", "Elemental", "Digital", "Quantum", "Celestial", "Ethereal"];
+            const suffixes = ["Stone", "Crystal", "Energy", "Essence", "Orb", "Shard", "Dust", "Flame"];
+            const nouns = ["Dragon", "Phoenix", "Unicorn", "Griffin", "Kraken", "Sphinx", "Basilisk", "Chimera"];
+            
+            // Generate the rest of the 1000 elements
+            while (elements.length < 1000) {
+                const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+                const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+                const noun = nouns[Math.floor(Math.random() * nouns.length)];
+                
+                // Create different element name patterns
+                let name;
+                const pattern = Math.floor(Math.random() * 4);
+                
+                switch(pattern) {
+                    case 0:
+                        name = `${prefix} ${suffix}`;
+                        break;
+                    case 1:
+                        name = `${noun} ${suffix}`;
+                        break;
+                    case 2:
+                        name = `${prefix} ${noun}`;
+                        break;
+                    default:
+                        name = `${noun}`;
+                }
+                
+                // Make sure we don't have duplicates
+                if (!elements.some(el => el.name === name)) {
+                    const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+                    elements.push({ name, color });
+                }
+            }
+            
+            return elements;
+        };
+
+        // Initialize the game
+        const initGame = () => {
+            const elements = generateElements();
+            const discoveredElements = new Set(["Water", "Fire", "Earth", "Air"]);
+            const combinations = new Map();
+            let selectedElements = [];
+            
+            // Add specific combinations
+            combinations.set("Dog+Life", "Dem Studios");
+            combinations.set("Dog+Parrot", "14592 Studios");
+            
+            // DOM elements
+            const elementsGrid = document.getElementById('elements-grid');
+            const dropZone = document.getElementById('drop-zone');
+            const combineBtn = document.getElementById('combine-btn');
+            const resultArea = document.getElementById('result-area');
+            const discoveredList = document.getElementById('discovered-list');
+            const totalElementsSpan = document.getElementById('total-elements');
+            const discoveredCountSpan = document.getElementById('discovered-count');
+            const combinationsSpan = document.getElementById('combinations');
+            const searchInput = document.getElementById('search-input');
+            
+            // Update stats
+            const updateStats = () => {
+                totalElementsSpan.textContent = elements.length;
+                discoveredCountSpan.textContent = discoveredElements.size;
+                combinationsSpan.textContent = combinations.size;
+            };
+            
+            // Render elements
+            const renderElements = (filter = '') => {
+                elementsGrid.innerHTML = '';
+                
+                elements
+                    .filter(el => discoveredElements.has(el.name) && 
+                           el.name.toLowerCase().includes(filter.toLowerCase()))
+                    .forEach(element => {
+                        const elementDiv = document.createElement('div');
+                        elementDiv.className = 'element';
+                        elementDiv.textContent = element.name;
+                        elementDiv.style.backgroundColor = element.color;
+                        elementDiv.style.color = getContrastColor(element.color);
+                        elementDiv.draggable = true;
+                        
+                        elementDiv.addEventListener('dragstart', (e) => {
+                            e.dataTransfer.setData('text/plain', element.name);
+                        });
+                        
+                        elementsGrid.appendChild(elementDiv);
+                    });
+            };
+            
+            // Get contrasting text color for readability
+            const getContrastColor = (hexcolor) => {
+                const r = parseInt(hexcolor.substr(1, 2), 16);
+                const g = parseInt(hexcolor.substr(3, 2), 16);
+                const b = parseInt(hexcolor.substr(5, 2), 16);
+                const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+                return (yiq >= 128) ? '#000000' : '#FFFFFF';
+            };
+            
+            // Update discovered list
+            const updateDiscoveredList = () => {
+                discoveredList.innerHTML = '';
+                const recent = Array.from(discoveredElements).slice(-10).reverse();
+                
+                recent.forEach(elementName => {
+                    const element = elements.find(el => el.name === elementName);
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'discovered-item';
+                    itemDiv.textContent = elementName;
+                    if (element) {
+                        itemDiv.style.backgroundColor = element.color;
+                        itemDiv.style.color = getContrastColor(element.color);
+                    }
+                    discoveredList.appendChild(itemDiv);
+                });
+            };
+            
+            // Handle drop zone events
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('active');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('active');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('active');
+                
+                const elementName = e.dataTransfer.getData('text/plain');
+                
+                if (selectedElements.length < 2 && !selectedElements.includes(elementName)) {
+                    selectedElements.push(elementName);
+                    
+                    const elementDiv = document.createElement('div');
+                    elementDiv.className = 'element';
+                    elementDiv.textContent = elementName;
+                    
+                    const element = elements.find(el => el.name === elementName);
+                    if (element) {
+                        elementDiv.style.backgroundColor = element.color;
+                        elementDiv.style.color = getContrastColor(element.color);
+                    }
+                    
+                    dropZone.appendChild(elementDiv);
+                    
+                    if (selectedElements.length === 2) {
+                        combineBtn.disabled = false;
+                    }
+                }
+            });
+            
+            // Handle combine button
+            combineBtn.addEventListener('click', () => {
+                if (selectedElements.length === 2) {
+                    const [el1, el2] = selectedElements;
+                    const combinationKey1 = `${el1}+${el2}`;
+                    const combinationKey2 = `${el2}+${el1}`;
+                    
+                    let result = null;
+                    
+                    // Check if combination exists
+                    if (combinations.has(combinationKey1)) {
+                        result = combinations.get(combinationKey1);
+                    } else if (combinations.has(combinationKey2)) {
+                        result = combinations.get(combinationKey2);
+                    } else {
+                        // Generate a new element (for demo purposes)
+                        const newElementName = generateNewElementName(el1, el2);
+                        result = newElementName;
+                        
+                        // Add to combinations
+                        combinations.set(combinationKey1, newElementName);
+                        
+                        // Add to elements if it doesn't exist
+                        if (!elements.some(el => el.name === newElementName)) {
+                            const newColor = generateRandomColor();
+                            elements.push({ name: newElementName, color: newColor });
+                        }
+                    }
+                    
+                    // Display result
+                    resultArea.innerHTML = '';
+                    const resultElement = elements.find(el => el.name === result);
+                    
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'element';
+                    resultDiv.textContent = result;
+                    resultDiv.style.fontSize = '1.5rem';
+                    resultDiv.style.padding = '20px';
+                    
+                    if (resultElement) {
+                        resultDiv.style.backgroundColor = resultElement.color;
+                        resultDiv.style.color = getContrastColor(resultElement.color);
+                    } else {
+                        resultDiv.style.backgroundColor = '#3498db';
+                        resultDiv.style.color = 'white';
+                    }
+                    
+                    resultArea.appendChild(resultDiv);
+                    
+                    // Add to discovered if new
+                    if (!discoveredElements.has(result)) {
+                        discoveredElements.add(result);
+                        updateDiscoveredList();
+                        updateStats();
+                        renderElements();
+                    }
+                    
+                    // Reset selection
+                    selectedElements = [];
+                    dropZone.innerHTML = '<p>Drag two elements here to combine</p>';
+                    combineBtn.disabled = true;
+                }
+            });
+            
+            // Generate a new element name
+            const generateNewElementName = (el1, el2) => {
+                const nameParts = [
+                    `${el1} ${el2}`, 
+                    `${el2} ${el1}`,
+                    `Fusion of ${el1} and ${el2}`,
+                    `${el1}-${el2} Hybrid`,
+                    `Mysterious ${el1} ${el2}`,
+                    `Ancient ${el1} ${el2}`,
+                    `${el1} ${el2} Essence`
+                ];
+                
+                return nameParts[Math.floor(Math.random() * nameParts.length)];
+            };
+            
+            // Generate a random color
+            const generateRandomColor = () => {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            };
+            
+            // Search functionality
+            searchInput.addEventListener('input', (e) => {
+                renderElements(e.target.value);
+            });
+            
+            // Initialize the game
+            renderElements();
+            updateDiscoveredList();
+            updateStats();
+        };
+
+        // Start the game when page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
